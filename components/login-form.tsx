@@ -8,6 +8,7 @@ import { api } from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/app/context/AuthContext";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 export function LoginForm({
   className,
@@ -45,11 +46,20 @@ export function LoginForm({
             console.error(e);
           });
       }
-    } catch (error: unknown) {
-      console.error(error);
+    } catch (err: unknown) {
+      console.error(err);
+
+      let errorMessage = "Erro desconhecido";
+
+      if (err instanceof AxiosError) {
+        errorMessage = err.response?.data?.message || err.message;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
       toast.error("Falha no login", {
         position: "top-center",
-        description: error.response?.data?.message || "Erro desconhecido",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
