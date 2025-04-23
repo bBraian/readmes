@@ -2,44 +2,51 @@ import { NextRequest, NextResponse } from "next/server"
 
 const publicRoutes = [
   { path: '/auth', whenAuthenticated: 'redirect' },
-  { path: '/in-development', whenAuthenticated: 'next' },
-] as const
+] as const;
 
-const REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE = '/auth'
+const DEFAULT_PRIVATE_REDIRECT = '/readmes'; // quando logado e acessa rota pública com redirect
+const DEFAULT_PUBLIC_REDIRECT = '/auth';     // quando não logado e tenta rota protegida
 
 export function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  const publicRoute = publicRoutes.find(route => route.path === path)
+  const { pathname } = request.nextUrl;
+  const publicRoute = publicRoutes.find(route => route.path === pathname);
+
   const authHeader = request.headers.get("Authorization");
-  const authToken = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : request.cookies.get("readmes_app.accessToken")?.value;
+  const authToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.split(" ")[1]
+    : request.cookies.get("readmes_app.accessToken")?.value;
 
-  if(!authToken && publicRoute) {
-    return NextResponse.next()
-  }
+  const isAuthenticated = !!authToken;
 
-  if(!authToken && !publicRoute) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = REDIRECT_WHEN_NOT_AUTHENTICATED_ROUTE
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  if(authToken && publicRoute && publicRoute.whenAuthenticated === 'redirect') {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/auth'
-
-    return NextResponse.redirect(redirectUrl)
-  }
-
-  if(authToken && !publicRoute) {
-    try {
+  if (!isAuthenticated) {
+    if (publicRoute) {
       return NextResponse.next();
-    } catch (error) {
-      console.error("Error in middleware:", error);
-      return resetLogin(request);
+    } else {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = DEFAULT_PUBLIC_REDIRECT;
+      return NextResponse.redirect(redirectUrl);
     }
   }
+  
 
-  return NextResponse.next()
+  if (publicRoute?.whenAuthenticated === 'redirect') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = DEFAULT_PRIVATE_REDIRECT;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (isAuthenticated && pathname === '/') {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = DEFAULT_PRIVATE_REDIRECT;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  try {
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Error in middleware:", error);
+    return resetLogin(request);
+  }
 }
 
 function resetLogin(request: NextRequest) {
@@ -55,13 +62,6 @@ function resetLogin(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
-}
+};

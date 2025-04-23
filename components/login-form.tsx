@@ -47,6 +47,7 @@ export function LoginForm({
           });
       }
     } catch (err: unknown) {
+      toast.dismiss();
       console.error(err);
 
       let errorMessage = "Erro desconhecido";
@@ -62,6 +63,7 @@ export function LoginForm({
         description: errorMessage,
       });
     } finally {
+      toast.dismiss();
       setLoading(false);
     }
   }
