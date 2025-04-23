@@ -3,11 +3,13 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const slug = await params
+  
   const userId = getUserFromRequest(req);
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const readmeId = (await params).slug;
+  const readmeId = slug.id;
   const readme = await prisma.readme.findUnique({
     where: { id: readmeId, userId },
   });
@@ -21,11 +23,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
   return Response.json(readme);
 }
 
-export async function PUT(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const slug = await params
   const userId = getUserFromRequest(req);
   if (!userId) return new Response("Unauthorized", { status: 401 });
 
-  const readmeId = (await params).slug;
+  const readmeId = slug.id;
   const readme = await prisma.readme.findUnique({
     where: { id: readmeId, userId },
   });
