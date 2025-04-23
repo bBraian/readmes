@@ -27,6 +27,7 @@ function AuthTabs() {
           variant={tab === "register" ? "default" : "outline"}
           asChild
           size="sm"
+          disabled={true}
         >
           <Link href="/auth?tab=register">Cadastrar</Link>
         </Button>
