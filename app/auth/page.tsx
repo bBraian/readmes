@@ -29,7 +29,8 @@ function AuthTabs() {
           size="sm"
           disabled={true}
         >
-          <Link href="/auth?tab=register">Cadastrar</Link>
+          <Link href="#">Cadastrar</Link>
+          {/* <Link href="/auth?tab=register">Cadastrar</Link> */}
         </Button>
       </div>
 
